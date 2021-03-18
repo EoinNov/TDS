@@ -27,7 +27,7 @@ public class PM : MonoBehaviour
     void FixedUpdate()
     {
         Move();
-        print(rb.velocity.magnitude);
+        
     }
 
     void Move()
