@@ -55,6 +55,9 @@ public class ZombieMove : MonoBehaviour
     }
     private void OnDisable()
     {
+        
         rb.velocity = Vector2.zero;
+        anim.SetFloat("speed", rb.velocity.magnitude);
+
     }
 }
