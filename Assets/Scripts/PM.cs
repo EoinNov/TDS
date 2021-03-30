@@ -8,6 +8,7 @@ public class PM : MonoBehaviour
 
     Rigidbody2D rb;
     Animator anim;
+    Zombie zomb; 
     
 
     // Start is called before the first frame update
@@ -17,7 +18,11 @@ public class PM : MonoBehaviour
         anim = GetComponent<Animator>();
       
     }
-
+    private void Start()
+    {
+        zomb = FindObjectOfType<Zombie>();
+        zomb.onCheckHeals += healZomb;
+    }
     // Update is called once per frame
     void Update()
     {
@@ -29,7 +34,11 @@ public class PM : MonoBehaviour
         Move();
         
     }
-
+    void healZomb()
+    {
+        print("я попал");
+        zomb.onCheckHeals -= healZomb;
+    }
     void Move()
     {
 

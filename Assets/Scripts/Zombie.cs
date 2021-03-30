@@ -1,13 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Zombie : MonoBehaviour
 {
     public float followDistance;
     public float attackDistance;
     Animator anim;
-    float distanse;
+    float distance;
+    public bool isSleep;
+    float viewRotate = 80 ;
+
+    public Action onCheckHeals;
+   
 
     Player player;
     ZombieMove movement;
@@ -31,6 +37,7 @@ public class Zombie : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        onCheckHeals += heal;
         player = FindObjectOfType<Player>();
         activeState = ZombieState.STAND;
         
@@ -39,8 +46,8 @@ public class Zombie : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-
-
+        print("Damage!");
+        distance = Vector2.Distance(transform.position, player.transform.position);
         UpdateState();
 
 
@@ -53,22 +60,15 @@ public class Zombie : MonoBehaviour
     {
       
 
-        float distance = Vector2.Distance(transform.position, player.transform.position);
+       
 
         switch (activeState)
         {
             case ZombieState.STAND:
-                if (distance <= followDistance)
-                {
-                    LayerMask layerMask = LayerMask.GetMask("Walls");
-                    Vector2 direction = player.transform.position - transform.position;
-                    Debug.DrawRay(transform.position, direction, Color.red);
-                    RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, distance, layerMask);
 
-                    if (hit.collider == null)
-                    {
-                        ChangeState(ZombieState.MOVE);
-                    }
+                if (CheckToMove())
+                {
+                    ChangeState(ZombieState.MOVE);
                 }
                 //check field of view
                 break;
@@ -113,6 +113,7 @@ public class Zombie : MonoBehaviour
                 movement.enabled = true;
                 break;
             case ZombieState.ATTACK:
+                onCheckHeals();
                 movement.enabled = false;
                 // movement.StopMovement();
                 break;
@@ -134,10 +135,36 @@ public class Zombie : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, attackDistance);
 
     }
+    private bool CheckToMove()
+    {
+        
+       
+        if (distance <= followDistance)
+        {
+            LayerMask layerMask = LayerMask.GetMask("Walls");
+            Vector2 direction = player.transform.position - transform.position;
+            float angle = Vector3.Angle(-transform.up, direction);
+            if (angle > viewRotate / 2) 
+            {
+                return false;
+            }
+            Debug.DrawRay(transform.position, direction, Color.red);
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, distance, layerMask);
 
+            if (hit.collider == null)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    void heal()
+    {
+        print("Жизни Зомби");
+    }
     public void DoDamage()
     {
-        if (distanse < attackDistance)
+        if (distance < attackDistance)
         {
             print("Damage");
         }
