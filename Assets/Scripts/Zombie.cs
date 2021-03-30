@@ -37,61 +37,90 @@ public class Zombie : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
 
 
-        distanse = Vector3.Distance(transform.position, player.transform.position);
-        
+        UpdateState();
 
-       
-       
+
+
+
+
+
+    }
+    void UpdateState()
+    {
+      
+
+        float distance = Vector2.Distance(transform.position, player.transform.position);
+
         switch (activeState)
         {
             case ZombieState.STAND:
-          
-                ChangeStand(distanse);
-                movement.enabled = false;
+                if (distance <= followDistance)
+                {
+                    LayerMask layerMask = LayerMask.GetMask("Walls");
+                    Vector2 direction = player.transform.position - transform.position;
+                    Debug.DrawRay(transform.position, direction, Color.red);
+                    RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, distance, layerMask);
 
+                    if (hit.collider == null)
+                    {
+                        ChangeState(ZombieState.MOVE);
+                    }
+                }
+                //check field of view
                 break;
             case ZombieState.MOVE:
-                
-                ChangeStand(distanse);
+                if (distance <= attackDistance)
+                {
+                    ChangeState(ZombieState.ATTACK);
+                }
+                else if (distance >= followDistance)
+                {
+                    ChangeState(ZombieState.STAND);
+                }
+                Rotate();
+                break;
+            case ZombieState.ATTACK:
+                if (distance > attackDistance)
+                {
+                    
+                    ChangeState(ZombieState.MOVE);
+                }
+                Rotate();
+
+            
+                    anim.SetTrigger("shoot");
+
+               
+
+
+                break;
+        }
+    }
+    private void ChangeState(ZombieState newState)
+    {
+        activeState = newState;
+        switch (activeState)
+        {
+            case ZombieState.STAND:
+                movement.enabled = false;
+                //movement.StopMovement();
+                break;
+            case ZombieState.MOVE:
                 movement.enabled = true;
                 break;
             case ZombieState.ATTACK:
-                anim.SetTrigger("shoot");
                 movement.enabled = false;
-                Rotate();
-                ChangeStand(distanse);
+                // movement.StopMovement();
                 break;
-        }
-
-    }
-
-    private void ChangeStand(float distanse)
-    {
-        if (distanse <= followDistance && distanse > attackDistance)
-        {
-            activeState = ZombieState.MOVE;
-        }
-        else if (distanse <= attackDistance)
-        {
-            activeState = ZombieState.ATTACK;
-        }
-        else
-        {
-            activeState = ZombieState.STAND;
         }
     }
     void Rotate()
     {
-        Vector3 zombiePoition = transform.position;
-        Vector3 playerPosition = player.transform.position;
-
-        Vector3 direction = playerPosition - zombiePoition;
-
-        direction.z = 0;
+        Vector2 direction = player.transform.position - transform.position;
         transform.up = -direction;
     }
     private void OnDrawGizmosSelected()
