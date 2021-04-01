@@ -7,10 +7,19 @@ public class Zombie : MonoBehaviour
 {
     public float followDistance;
     public float attackDistance;
+    Vector3 startPosition;
+
+    public GameObject[] wayPoints;
+    System.Random rdn;
+
+    [Header("ZombieParam")]
+    public int zombieHealth = 10;
+
     Animator anim;
     float distance;
     public bool isSleep;
     float viewRotate = 80 ;
+
 
     public Action onCheckHeals;
    
@@ -24,7 +33,8 @@ public class Zombie : MonoBehaviour
     enum ZombieState
     {
         STAND,
-        MOVE,
+        MOVEtoPlayer,
+        RETURN,
         ATTACK
     }
 
@@ -37,16 +47,22 @@ public class Zombie : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        onCheckHeals += heal;
+        
+        rdn = new System.Random();
+        startPosition = transform.position;
+        
         player = FindObjectOfType<Player>();
-        activeState = ZombieState.STAND;
+        //activeState = ZombieState.STAND;
+        StartCoroutine(PatrolZombie());
         
     }
+
+
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        print("Damage!");
+        
         distance = Vector2.Distance(transform.position, player.transform.position);
         UpdateState();
 
@@ -68,26 +84,38 @@ public class Zombie : MonoBehaviour
 
                 if (CheckToMove())
                 {
-                    ChangeState(ZombieState.MOVE);
+                    ChangeState(ZombieState.MOVEtoPlayer);
                 }
                 //check field of view
                 break;
-            case ZombieState.MOVE:
+            case ZombieState.MOVEtoPlayer:
+                movement.targetPosition = player.transform.position;
                 if (distance <= attackDistance)
                 {
                     ChangeState(ZombieState.ATTACK);
                 }
                 else if (distance >= followDistance)
                 {
-                    ChangeState(ZombieState.STAND);
+                    ChangeState(ZombieState.RETURN);
                 }
                 Rotate();
+                break;
+            case ZombieState.RETURN:
+                if (CheckToMove())
+                {
+                    ChangeState(ZombieState.MOVEtoPlayer);
+                }
+                float distanseToPoint = Vector2.Distance(transform.position, startPosition);
+                if (distanseToPoint <= 0.01)
+                {
+                    ChangeState(ZombieState.STAND);
+                }
                 break;
             case ZombieState.ATTACK:
                 if (distance > attackDistance)
                 {
                     
-                    ChangeState(ZombieState.MOVE);
+                    ChangeState(ZombieState.MOVEtoPlayer);
                 }
                 Rotate();
 
@@ -109,7 +137,13 @@ public class Zombie : MonoBehaviour
                 movement.enabled = false;
                 //movement.StopMovement();
                 break;
-            case ZombieState.MOVE:
+            case ZombieState.MOVEtoPlayer:
+             
+                movement.enabled = true;
+                break;
+            case ZombieState.RETURN:
+
+                movement.targetPosition = startPosition;
                 movement.enabled = true;
                 break;
             case ZombieState.ATTACK:
@@ -158,9 +192,29 @@ public class Zombie : MonoBehaviour
         }
         return false;
     }
-    void heal()
+
+
+    IEnumerator PatrolZombie()
     {
-        print("Жизни Зомби");
+        while (true)
+        {
+            yield return new WaitForSeconds(22);
+            if (movement.targetPosition != player.transform.position)
+            {
+                int point = rdn.Next(0, wayPoints.Length);
+                startPosition = wayPoints[point].transform.position;
+                ChangeState(ZombieState.RETURN);
+            }
+        }
+
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "bullet")
+        {
+            onCheckHeals();
+            zombieHealth--;
+        }
     }
     public void DoDamage()
     {
