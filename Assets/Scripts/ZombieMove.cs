@@ -5,7 +5,7 @@ using UnityEngine;
 public class ZombieMove : MonoBehaviour
 {
     public float speed;
-    public Player player;
+    public Vector3 targetPosition;
     Rigidbody2D rb;
     Animator anim;
 
@@ -17,19 +17,14 @@ public class ZombieMove : MonoBehaviour
         anim = GetComponent<Animator>();
 
     }
-    private void Start()
-    {
-        player = FindObjectOfType<Player>();
-
-    }
+  
 
     // Update is called once per frame
     void Update()
     {
         Vector3 zombiePoition = transform.position;
-        Vector3 playerPosition = player.transform.position;
 
-        Vector3 direction = playerPosition - zombiePoition;
+        Vector3 direction = targetPosition - zombiePoition;
         Move(direction);
         Rotate(direction);
 
@@ -41,7 +36,7 @@ public class ZombieMove : MonoBehaviour
     {
 
         anim.SetFloat("speed", rb.velocity.magnitude);
-        rb.velocity = direction * speed;
+        rb.velocity = direction.normalized * speed;
 
 
 
