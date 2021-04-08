@@ -7,26 +7,33 @@ public class Zombie : MonoBehaviour
 {
     public float followDistance;
     public float attackDistance;
-    public int zombieHeals;
+    Vector3 startPosition;
+
+    public GameObject[] wayPoints;
+    System.Random rdn;
+
+    [Header("ZombieParam")]
+    public int zombieHealth = 10;
+
     Animator anim;
     float distance;
     public bool isSleep;
     float viewRotate = 80 ;
 
-    public Action onCheckHeals;
 
-    Vector2 startPosition;
+    public Action onCheckHeals;
+   
+
     Player player;
     ZombieMove movement;
 
-    public GameObject[] wayPoint;
-    System.Random rnd;
+
     ZombieState activeState;
 
     enum ZombieState
     {
         STAND,
-        MOVE,
+        MOVEtoPlayer,
         RETURN,
         ATTACK
     }
@@ -40,18 +47,22 @@ public class Zombie : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        rnd = new System.Random();
+        
+        rdn = new System.Random();
         startPosition = transform.position;
+        
         player = FindObjectOfType<Player>();
-        activeState = ZombieState.STAND;
-        StartCoroutine(Patruling());
+        //activeState = ZombieState.STAND;
+        StartCoroutine(PatrolZombie());
         
     }
+
+
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        print("Damage!");
+        
         distance = Vector2.Distance(transform.position, player.transform.position);
         UpdateState();
 
@@ -73,11 +84,11 @@ public class Zombie : MonoBehaviour
 
                 if (CheckToMove())
                 {
-                    ChangeState(ZombieState.MOVE);
+                    ChangeState(ZombieState.MOVEtoPlayer);
                 }
                 //check field of view
                 break;
-            case ZombieState.MOVE:
+            case ZombieState.MOVEtoPlayer:
                 movement.targetPosition = player.transform.position;
                 if (distance <= attackDistance)
                 {
@@ -85,7 +96,6 @@ public class Zombie : MonoBehaviour
                 }
                 else if (distance >= followDistance)
                 {
-                    
                     ChangeState(ZombieState.RETURN);
                 }
                 Rotate();
@@ -93,11 +103,10 @@ public class Zombie : MonoBehaviour
             case ZombieState.RETURN:
                 if (CheckToMove())
                 {
-                    ChangeState(ZombieState.MOVE);
+                    ChangeState(ZombieState.MOVEtoPlayer);
                 }
-               
-                float distanceToPoint = Vector2.Distance(transform.position, startPosition);
-                if (distanceToPoint <= 0.1)
+                float distanseToPoint = Vector2.Distance(transform.position, startPosition);
+                if (distanseToPoint <= 0.01)
                 {
                     ChangeState(ZombieState.STAND);
                 }
@@ -106,35 +115,18 @@ public class Zombie : MonoBehaviour
                 if (distance > attackDistance)
                 {
                     
-                    ChangeState(ZombieState.MOVE);
+                    ChangeState(ZombieState.MOVEtoPlayer);
                 }
                 Rotate();
 
             
                     anim.SetTrigger("shoot");
 
-
                
+
 
                 break;
         }
-    }
-    private IEnumerator Patruling()
-    {
-        while(true)
-        {
-            yield return new WaitForSeconds(15);
-
-            if (movement.targetPosition != player.transform.position)
-            {
-                int point = rnd.Next(0, wayPoint.Length);
-                startPosition = wayPoint[point].transform.position;
-                ChangeState(ZombieState.RETURN);
-            }
-        }
-       
-        
-
     }
     private void ChangeState(ZombieState newState)
     {
@@ -145,13 +137,13 @@ public class Zombie : MonoBehaviour
                 movement.enabled = false;
                 //movement.StopMovement();
                 break;
-            case ZombieState.RETURN:
-                movement.targetPosition =startPosition;
+            case ZombieState.MOVEtoPlayer:
+             
                 movement.enabled = true;
-
                 break;
-            case ZombieState.MOVE:
-               
+            case ZombieState.RETURN:
+
+                movement.targetPosition = startPosition;
                 movement.enabled = true;
                 break;
             case ZombieState.ATTACK:
@@ -200,8 +192,30 @@ public class Zombie : MonoBehaviour
         }
         return false;
     }
-  
 
+
+    IEnumerator PatrolZombie()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(22);
+            if (movement.targetPosition != player.transform.position)
+            {
+                int point = rdn.Next(0, wayPoints.Length);
+                startPosition = wayPoints[point].transform.position;
+                ChangeState(ZombieState.RETURN);
+            }
+        }
+
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "bullet")
+        {
+            onCheckHeals();
+            zombieHealth--;
+        }
+    }
     public void DoDamage()
     {
         if (distance < attackDistance)
@@ -209,12 +223,4 @@ public class Zombie : MonoBehaviour
             print("Damage");
         }
     }
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.tag == "bullet")
-        {
-            onCheckHeals();
-            zombieHeals--;
-        }
     }
-}

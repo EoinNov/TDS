@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,26 +7,33 @@ using UnityEngine.UI;
 public class ZombieUI : MonoBehaviour
 {
     Zombie zomb;
-    public Slider slider;
+    Slider slider;
+
     // Start is called before the first frame update
     void Start()
     {
-        
-        zomb = FindObjectOfType<Zombie>();
-        slider.maxValue = zomb.zombieHeals;
-        slider.value = zomb.zombieHeals;
-        zomb.onCheckHeals += updateHeals;
+        slider = GetComponentInChildren<Slider>();
+        zomb = GetComponentInParent<Zombie>();
+       
+        zomb.onCheckHeals = UpdateHealth;
+  
 
+        slider.maxValue = zomb.zombieHealth;
+        slider.value = zomb.zombieHealth;
+    }
+
+
+
+    private void UpdateHealth()
+    {
+        slider.value = zomb.zombieHealth;
+        print("Обновление слайдера через События");
     }
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
+        print("Обновление слайдера через LateUpdate");
         transform.rotation = Quaternion.identity;
-     
-    }
-    void updateHeals()
-    {
-        slider.value = zomb.zombieHeals;
     }
 }

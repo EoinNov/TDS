@@ -5,10 +5,11 @@ using UnityEngine;
 public class ZombieMove : MonoBehaviour
 {
     public float speed;
-    public Vector3 targetPosition;
+
     Rigidbody2D rb;
     Animator anim;
 
+    public Vector3 targetPosition;
 
     // Start is called before the first frame update
     void Awake()
@@ -17,13 +18,12 @@ public class ZombieMove : MonoBehaviour
         anim = GetComponent<Animator>();
 
     }
-  
+
 
     // Update is called once per frame
     void Update()
     {
         Vector3 zombiePoition = transform.position;
-
         Vector3 direction = targetPosition - zombiePoition;
         Move(direction);
         Rotate(direction);
